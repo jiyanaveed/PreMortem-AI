@@ -1,0 +1,20 @@
+logs
+*.log
+npm-debug.log*
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Secrets — local only (never commit)
+backend/.env
+.env
+.env.local
