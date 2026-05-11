@@ -13,8 +13,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 .Python
+.pytest_cache/
+.venv/
+backend/.venv/
 
 # Secrets — local only (never commit)
 backend/.env
 .env
 .env.local
+.env.*.local

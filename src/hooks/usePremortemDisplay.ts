@@ -32,15 +32,22 @@ export function usePremortemDisplay(): {
     ],
   );
 
-  const backendFallbackUsed =
-    ctx.mode === "live" &&
-    !ctx.demoFallbackUsed &&
-    data.analysisSource === "backend_fallback";
+  const backendFallbackUsed = useMemo(
+    () =>
+      ctx.mode === "live" &&
+      !ctx.demoFallbackUsed &&
+      data.analysisSource === "backend_fallback",
+    [ctx.mode, ctx.demoFallbackUsed, data.analysisSource],
+  );
 
-  const showLiveGeminiCopy = isLiveGeminiAnalysis(data, ctx.demoFallbackUsed);
-  const showBackendFallbackCopy = isBackendDeterministicAnalysis(
-    data,
-    ctx.demoFallbackUsed,
+  const showLiveGeminiCopy = useMemo(
+    () => isLiveGeminiAnalysis(data, ctx.demoFallbackUsed),
+    [data, ctx.demoFallbackUsed],
+  );
+
+  const showBackendFallbackCopy = useMemo(
+    () => isBackendDeterministicAnalysis(data, ctx.demoFallbackUsed),
+    [data, ctx.demoFallbackUsed],
   );
 
   return {

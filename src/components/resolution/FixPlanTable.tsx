@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import type { FixPlanRow } from "../../types/analysis";
 import { GlassPanel } from "../ui/GlassPanel";
 import { SectionLabel } from "../ui/SectionLabel";
@@ -9,6 +9,80 @@ function priorityClass(priority: FixPlanRow["priority"]) {
   if (priority === "P1") return "text-solarOrange";
   return "text-magentaViolet";
 }
+
+type MergedRow = FixPlanRow;
+
+type FixPlanTableRowProps = {
+  row: MergedRow;
+  onStatusChange: (id: string, status: FixPlanRow["status"]) => void;
+};
+
+const FixPlanTableRow = memo(function FixPlanTableRow({
+  row,
+  onStatusChange,
+}: FixPlanTableRowProps) {
+  return (
+    <tr className="bg-warmGlassSoft hover:bg-peachGlow/[0.06]">
+      <td
+        className={`px-4 py-3 font-mono text-xs ${priorityClass(row.priority)}`}
+      >
+        {row.priority}
+      </td>
+      <td className="max-w-xs px-4 py-3 text-softWhite">{row.action}</td>
+      <td className="px-4 py-3 text-mutedGrey">{row.owner}</td>
+      <td className="max-w-[220px] px-4 py-3 text-mutedGrey">
+        {row.evidenceNeeded}
+      </td>
+      <td className="px-4 py-3 font-mono text-xs text-softWhite">
+        {row.timeframe}
+      </td>
+      <td className="px-4 py-3">
+        <span
+          className={[
+            "rounded-full border px-2 py-1 font-mono text-[10px] uppercase tracking-wide",
+            row.status === "Approved"
+              ? "border-softLavender/45 text-softLavender"
+              : row.status === "Rejected"
+                ? "border-sunsetCoral/45 text-sunsetCoral"
+                : row.status === "Edited"
+                  ? "border-fluxPink/45 text-fluxPink"
+                  : "border-warmBorder text-mutedGrey",
+          ].join(" ")}
+        >
+          {row.status}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex flex-wrap gap-1">
+          <button
+            type="button"
+            title="Approve"
+            onClick={() => onStatusChange(row.id, "Approved")}
+            className="rounded-lg border border-warmBorder p-1.5 text-signalCyan transition hover:border-signalCyan/55 hover:bg-signalCyan/10"
+          >
+            <Check className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            title="Edit"
+            onClick={() => onStatusChange(row.id, "Edited")}
+            className="rounded-lg border border-warmBorder p-1.5 text-solarOrange transition hover:border-solarOrange/50 hover:bg-solarOrange/10"
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            title="Reject"
+            onClick={() => onStatusChange(row.id, "Rejected")}
+            className="rounded-lg border border-warmBorder p-1.5 text-sunsetCoral transition hover:border-sunsetCoral/50 hover:bg-sunsetCoral/10"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 type FixPlanTableProps = {
   rows: FixPlanRow[];
@@ -28,9 +102,12 @@ export function FixPlanTable({ rows }: FixPlanTableProps) {
     [rows, local],
   );
 
-  function setStatus(id: string, status: FixPlanRow["status"]) {
-    setLocal((prev) => ({ ...prev, [id]: status }));
-  }
+  const onStatusChange = useCallback(
+    (id: string, status: FixPlanRow["status"]) => {
+      setLocal((prev) => ({ ...prev, [id]: status }));
+    },
+    [],
+  );
 
   return (
     <GlassPanel className="overflow-hidden">
@@ -55,65 +132,11 @@ export function FixPlanTable({ rows }: FixPlanTableProps) {
           </thead>
           <tbody className="divide-y divide-warmBorder/15">
             {merged.map((row) => (
-              <tr key={row.id} className="bg-warmGlassSoft hover:bg-peachGlow/[0.06]">
-                <td
-                  className={`px-4 py-3 font-mono text-xs ${priorityClass(row.priority)}`}
-                >
-                  {row.priority}
-                </td>
-                <td className="max-w-xs px-4 py-3 text-softWhite">{row.action}</td>
-                <td className="px-4 py-3 text-mutedGrey">{row.owner}</td>
-                <td className="max-w-[220px] px-4 py-3 text-mutedGrey">
-                  {row.evidenceNeeded}
-                </td>
-                <td className="px-4 py-3 font-mono text-xs text-softWhite">
-                  {row.timeframe}
-                </td>
-                <td className="px-4 py-3">
-                  <span
-                    className={[
-                      "rounded-full border px-2 py-1 font-mono text-[10px] uppercase tracking-wide",
-                      row.status === "Approved"
-                        ? "border-softLavender/45 text-softLavender"
-                        : row.status === "Rejected"
-                          ? "border-sunsetCoral/45 text-sunsetCoral"
-                          : row.status === "Edited"
-                            ? "border-fluxPink/45 text-fluxPink"
-                            : "border-warmBorder text-mutedGrey",
-                    ].join(" ")}
-                  >
-                    {row.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
-                    <button
-                      type="button"
-                      title="Approve"
-                      onClick={() => setStatus(row.id, "Approved")}
-                      className="rounded-lg border border-warmBorder p-1.5 text-signalCyan transition hover:border-signalCyan/55 hover:bg-signalCyan/10"
-                    >
-                      <Check className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Edit"
-                      onClick={() => setStatus(row.id, "Edited")}
-                      className="rounded-lg border border-warmBorder p-1.5 text-solarOrange transition hover:border-solarOrange/50 hover:bg-solarOrange/10"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      title="Reject"
-                      onClick={() => setStatus(row.id, "Rejected")}
-                      className="rounded-lg border border-warmBorder p-1.5 text-sunsetCoral transition hover:border-sunsetCoral/50 hover:bg-sunsetCoral/10"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
+              <FixPlanTableRow
+                key={row.id}
+                row={row}
+                onStatusChange={onStatusChange}
+              />
             ))}
           </tbody>
         </table>

@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
 import { GlassPanel } from "../components/ui/GlassPanel";
 import { SectionLabel } from "../components/ui/SectionLabel";
@@ -23,13 +24,21 @@ export function FailureMap() {
     showBackendFallbackCopy,
   } = usePremortemDisplay();
 
-  const stripLabel = analysisSourceBadgeLabel(
-    mode,
-    demoFallbackUsed,
-    cachedAnalysis,
+  const stripLabel = useMemo(
+    () =>
+      analysisSourceBadgeLabel(
+        mode,
+        demoFallbackUsed,
+        cachedAnalysis,
+      ),
+    [mode, demoFallbackUsed, cachedAnalysis],
   );
 
   const labelSuffix = mode === "live" && !demoFallbackUsed ? "live" : "demo";
+
+  const onExportBrief = useCallback(() => {
+    exportExecutiveBrief(displayData, selectedScenarioId);
+  }, [displayData, selectedScenarioId]);
 
   return (
     <div className="space-y-10 px-4 py-8 md:px-10 lg:px-14">
@@ -77,11 +86,7 @@ export function FailureMap() {
                 Backend fallback used
               </span>
             )}
-            <ExportBriefButton
-              onExport={() =>
-                exportExecutiveBrief(displayData, selectedScenarioId)
-              }
-            />
+            <ExportBriefButton onExport={onExportBrief} />
           </div>
         </div>
       </GlassPanel>

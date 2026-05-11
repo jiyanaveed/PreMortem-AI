@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { AuditEvent } from "../../types/analysis";
 import { GlassPanel } from "../ui/GlassPanel";
 import { SectionLabel } from "../ui/SectionLabel";
@@ -6,7 +7,9 @@ type AuditMemoryTimelineProps = {
   events: AuditEvent[];
 };
 
-export function AuditMemoryTimeline({ events }: AuditMemoryTimelineProps) {
+export const AuditMemoryTimeline = memo(function AuditMemoryTimeline({
+  events,
+}: AuditMemoryTimelineProps) {
   return (
     <GlassPanel className="p-4 md:p-5">
       <SectionLabel>Audit memory</SectionLabel>
@@ -31,4 +34,4 @@ export function AuditMemoryTimeline({ events }: AuditMemoryTimelineProps) {
       </ol>
     </GlassPanel>
   );
-}
+});

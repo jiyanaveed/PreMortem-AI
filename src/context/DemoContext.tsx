@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getMockAnalysis } from "../data/mockAnalysis";
 import { analyzePremortem } from "../services/api";
@@ -69,6 +70,9 @@ export type DemoContextValue = {
 };
 
 const DemoContext = createContext<DemoContextValue | null>(null);
+
+/** Narrow subscription: stable `resetDemo` only — avoids re-rendering Sidebar on analysis updates. */
+const DemoResetContext = createContext<(() => void) | null>(null);
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -152,10 +156,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     const hasDoc = selectedDocumentId !== null || isPasteCapture;
     if (!hasDoc || !selectedScenarioId || runLockRef.current) return;
     runLockRef.current = true;
-    setIsAnalyzing(true);
-    setAnalysisError(null);
-    setDemoFallbackUsed(false);
-    setEngineOverride(null);
+    flushSync(() => {
+      setIsAnalyzing(true);
+      setAnalysisError(null);
+      setDemoFallbackUsed(false);
+      setEngineOverride(null);
+    });
 
     const fallback = () =>
       getMockAnalysis(selectedDocumentId, selectedScenarioId, {
@@ -278,7 +284,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <DemoContext.Provider value={value}>{children}</DemoContext.Provider>
+    <DemoResetContext.Provider value={resetDemo}>
+      <DemoContext.Provider value={value}>{children}</DemoContext.Provider>
+    </DemoResetContext.Provider>
   );
 }
 
@@ -288,4 +296,12 @@ export function useDemo(): DemoContextValue {
     throw new Error("useDemo must be used within DemoProvider");
   }
   return ctx;
+}
+
+export function useDemoReset(): () => void {
+  const fn = useContext(DemoResetContext);
+  if (!fn) {
+    throw new Error("useDemoReset must be used within DemoProvider");
+  }
+  return fn;
 }

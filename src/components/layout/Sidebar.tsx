@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { Activity, GitBranch, RotateCcw, ShieldCheck } from "lucide-react";
 import { SectionLabel } from "../ui/SectionLabel";
-import { useDemo } from "../../context/DemoContext";
+import { useDemoReset } from "../../context/DemoContext";
 
 const links = [
   { to: "/", label: "01 / INPUT SIGNAL", icon: Activity },
@@ -10,10 +10,10 @@ const links = [
 ];
 
 export function Sidebar() {
-  const { resetDemo } = useDemo();
+  const resetDemo = useDemoReset();
 
   return (
-    <aside className="sticky top-0 z-20 hidden h-screen w-64 shrink-0 flex-col border-r border-warmBorder/50 bg-deepPlum/75 backdrop-blur-2xl md:flex">
+    <aside className="sticky top-0 z-20 hidden h-screen w-64 shrink-0 flex-col border-r border-warmBorder/50 bg-deepPlum/75 backdrop-blur-xl md:flex">
       <div className="border-b border-warmBorder/35 px-5 py-6">
         <div className="font-display text-lg font-semibold tracking-tight text-softWhite">
           PreMortem AI

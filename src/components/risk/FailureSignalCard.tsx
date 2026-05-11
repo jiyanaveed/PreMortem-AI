@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { FailurePoint } from "../../types/analysis";
 import { GlassPanel } from "../ui/GlassPanel";
 import { SectionLabel } from "../ui/SectionLabel";
@@ -24,7 +25,9 @@ type FailureSignalCardProps = {
   point: FailurePoint;
 };
 
-export function FailureSignalCard({ point }: FailureSignalCardProps) {
+export const FailureSignalCard = memo(function FailureSignalCard({
+  point,
+}: FailureSignalCardProps) {
   const tone = severityTone[point.severity];
   return (
     <GlassPanel className="p-4">
@@ -46,4 +49,4 @@ export function FailureSignalCard({ point }: FailureSignalCardProps) {
       </div>
     </GlassPanel>
   );
-}
+});

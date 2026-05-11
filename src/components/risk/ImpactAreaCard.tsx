@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { ImpactArea } from "../../types/analysis";
 import { GlassPanel } from "../ui/GlassPanel";
 
@@ -5,7 +6,9 @@ type ImpactAreaCardProps = {
   area: ImpactArea;
 };
 
-export function ImpactAreaCard({ area }: ImpactAreaCardProps) {
+export const ImpactAreaCard = memo(function ImpactAreaCard({
+  area,
+}: ImpactAreaCardProps) {
   return (
     <GlassPanel className="p-4">
       <div className="font-mono text-[10px] uppercase tracking-[0.35em] text-mutedGrey">
@@ -20,4 +23,4 @@ export function ImpactAreaCard({ area }: ImpactAreaCardProps) {
       </div>
     </GlassPanel>
   );
-}
+});

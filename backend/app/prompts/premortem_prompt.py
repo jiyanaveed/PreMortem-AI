@@ -18,8 +18,20 @@ SEVERITY_RUBRIC = """failurePoints[].severity MUST be one of: Critical | High | 
 • High — Probable delay, escalation storm, compliance finding, or customer/regulator credibility hit.
 • Medium — Process weakness or control drift that becomes dangerous under surge conditions — use for minor gaps."""
 
+SIGNAL_AND_IMPACT_RULES = """failurePoints[] — evidence-grade `signal` and scenario-tied `impact` (non-negotiable):
+• `signal` (18–45 words): write as an evidence signal, not a recommendation. It MUST explicitly echo concrete wording, mechanisms, cadences, roles, artifacts, or facts from the document excerpt (paraphrase is fine; invention is not). Name the observed weakness (what the document shows), not only the risk category. Avoid empty enterprise filler such as "lack of process", "insufficient controls", "vendor risk exists", "dependency risk", or "the company has … risk" without tying to excerpt detail.
+• `impact` (14–35 words): describe a concrete business consequence under scenarioTitle / scenarioDescription — e.g. audit exposure, delivery slip, governance or escalation breakdown, SLA timer failure, revenue milestone misalignment. Do not restate the signal verbatim.
+
+Good signal vs bad signal (pattern):
+• Good: "The document says delivery coordination depends on a primary vendor, while tier-2 visibility is limited to quarterly reviews and no automated upstream failure threshold is defined."
+• Bad: "The company has supplier dependency risk."
+
+Good vs bad `impact` (pattern):
+• Good: "If the tier-1 vendor slips, finance could recognize revenue before engineering acceptance aligns because milestone language diverges between the ERP and work-management tools, forcing audit rework under compressed timelines."
+• Bad: "This increases operational risk during vendor failure." """
+
 OUTPUT_REQUIREMENTS = """Operational depth:
-• Ground every failurePoint: `signal` paraphrases concrete document cues (controls, roles, artifacts, timing). `impact` states why it fails under THIS scenario (audit readiness, delay exposure, escalation, revenue, safety, data handling).
+• Apply SIGNAL_AND_IMPACT_RULES for every failurePoint.
 • Titles must be specific and punchy — ban lazy labels like "Communication risk" without substance.
 • wowSummary MUST include the exact digit of the failure count matching failurePoints.length (example: "… 7 failure signals …"). failureCount must equal len(failurePoints).
 • executiveSummary: minimum two substantive sentences covering exposure narrative, ownership/evidence gaps, and delay or escalation consequences.
@@ -56,7 +68,21 @@ Required JSON shape (keys and nesting must match exactly):
   "confidence": number 0-100
 }
 failureCount must equal failurePoints.length; criticalBlockerCount must equal criticalBlockers.length.
+Every id field (failurePoints, criticalBlockers, impactAreas, fixPlan, auditTrail, evidenceChecklist) must be a JSON string in double quotes (for example "fp-1"), never a bare number.
 Use enterprise-ready, presentation-friendly English."""
+
+QUALITY_RETRY_REPAIR_INSTRUCTION = (
+    "Your previous output failed quality validation because it did not include enough specific "
+    "failure points or grounded evidence. Return a complete valid JSON object with at least 7 "
+    "failurePoints, at least 3 criticalBlockers, and at least 5 fixPlan rows. Every failure point "
+    "must have a document-grounded signal and concrete impact. Do not summarize. Do not reduce "
+    "the number of findings."
+)
+
+
+def build_quality_retry_repair_instruction() -> str:
+    """Appended to the user message on the single post-schema Gemini quality retry."""
+    return QUALITY_RETRY_REPAIR_INSTRUCTION
 
 
 def build_system_prompt(req: AnalyzeRequest) -> str:
@@ -64,6 +90,7 @@ def build_system_prompt(req: AnalyzeRequest) -> str:
         ROLE_AND_MISSION,
         RISK_SCORE_RUBRIC,
         SEVERITY_RUBRIC,
+        SIGNAL_AND_IMPACT_RULES,
         OUTPUT_REQUIREMENTS,
     ]
     if req.analysisDepth == "strict":

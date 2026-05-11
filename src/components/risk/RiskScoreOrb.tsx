@@ -1,12 +1,15 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import type { PremortemAnalysis } from "../../types/analysis";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
 type RiskScoreOrbProps = {
   score: PremortemAnalysis["riskScore"];
   level: PremortemAnalysis["riskLevel"];
 };
 
-export function RiskScoreOrb({ score, level }: RiskScoreOrbProps) {
+function RiskScoreOrbInner({ score, level }: RiskScoreOrbProps) {
+  const reducedMotion = usePrefersReducedMotion();
   const hue =
     level === "High"
       ? "from-sunsetCoral/95 via-solarOrange/80 to-fluxPink/75"
@@ -22,8 +25,14 @@ export function RiskScoreOrb({ score, level }: RiskScoreOrbProps) {
           level === "High" ? "shadow-glowCoral" : "shadow-glowWarm",
           hue,
         ].join(" ")}
-        animate={{ rotate: [0, 2, -2, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        animate={
+          reducedMotion ? { rotate: 0 } : { rotate: [0, 2, -2, 0] }
+        }
+        transition={
+          reducedMotion
+            ? { duration: 0 }
+            : { duration: 8, repeat: Infinity, ease: "easeInOut" }
+        }
       >
         <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-deepPlum/90 backdrop-blur-sm ring-1 ring-warmBorder/45">
           <span className="font-mono text-[10px] uppercase tracking-[0.35em] text-mutedGrey">
@@ -46,3 +55,5 @@ export function RiskScoreOrb({ score, level }: RiskScoreOrbProps) {
     </div>
   );
 }
+
+export const RiskScoreOrb = memo(RiskScoreOrbInner);

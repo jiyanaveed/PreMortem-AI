@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { GlassPanel } from "../ui/GlassPanel";
 
 type WowSummaryStripProps = {
@@ -7,7 +8,7 @@ type WowSummaryStripProps = {
   subtitle?: string;
 };
 
-export function WowSummaryStrip({
+export const WowSummaryStrip = memo(function WowSummaryStrip({
   failureSignals,
   criticalBlockers,
   delayDays,
@@ -27,10 +28,10 @@ export function WowSummaryStrip({
             {criticalBlockers} CRITICAL BLOCKERS · {delayDays}-DAY DELAY EXPOSURE
           </div>
         </div>
-        <div className="max-w-xl rounded-xl border border-warmBorder bg-warmGlass px-4 py-3 font-mono text-xs leading-relaxed text-mutedGrey backdrop-blur-md">
+        <div className="max-w-xl rounded-xl border border-warmBorder bg-warmGlass px-4 py-3 font-mono text-xs leading-relaxed text-mutedGrey backdrop-blur-sm">
           {subtitle}
         </div>
       </div>
     </GlassPanel>
   );
-}
+});

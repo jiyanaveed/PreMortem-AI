@@ -1,8 +1,34 @@
 import type { PremortemAnalysis } from "../types/analysis";
 import { scenarioSlugForFilename } from "../data/mockAnalysis";
 
-const DISCLAIMER =
+const DISCLAIMER_DEMO =
   "Disclaimer: Demo intelligence output generated from simulated public-document excerpts. Not legal, audit, or compliance advice.";
+
+function confidenceLine(analysis: PremortemAnalysis): string {
+  if (analysis.analysisSource === "gemini") {
+    return `- **Confidence:** ${analysis.confidence}%`;
+  }
+  if (analysis.analysisSource === "backend_fallback") {
+    return `- **Confidence (fallback model):** ${analysis.confidence}%`;
+  }
+  return `- **Confidence (demo model):** ${analysis.confidence}%`;
+}
+
+function disclaimerForAnalysis(analysis: PremortemAnalysis): string {
+  if (analysis.analysisSource === "gemini") {
+    return (
+      "Disclaimer: AI-generated pre-mortem analysis based on the supplied document excerpt " +
+      "and selected scenario. Not legal, audit, or compliance advice."
+    );
+  }
+  if (analysis.analysisSource === "backend_fallback") {
+    return (
+      "Disclaimer: Fallback analysis generated because Live Gemini was unavailable or rejected. " +
+      "Not legal, audit, or compliance advice."
+    );
+  }
+  return DISCLAIMER_DEMO;
+}
 
 function lines(parts: string[]): string {
   return parts.join("\n");
@@ -44,7 +70,7 @@ export function exportExecutiveBrief(
     `## Risk overview`,
     `- **Risk score:** ${analysis.riskScore} / 100`,
     `- **Risk level:** ${analysis.riskLevel}`,
-    `- **Confidence (demo model):** ${analysis.confidence}%`,
+    confidenceLine(analysis),
     `- **Estimated delay exposure:** ${analysis.delayDays} days`,
     ``,
     `## Wow summary`,
@@ -72,7 +98,7 @@ export function exportExecutiveBrief(
     ...auditLines,
     ``,
     `---`,
-    DISCLAIMER,
+    disclaimerForAnalysis(analysis),
     ``,
   ]);
 

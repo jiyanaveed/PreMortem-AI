@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, type ChangeEvent } from "react";
 import { GlassPanel } from "../components/ui/GlassPanel";
 import { SectionLabel } from "../components/ui/SectionLabel";
 import { GlowButton } from "../components/ui/GlowButton";
@@ -38,11 +38,33 @@ export function ScenarioSimulator() {
     [selectedDocumentId],
   );
 
-  function selectDoc(id: string) {
-    setSelectedDocumentId(id);
-    setPastedDocumentText("");
-    setPasteCapture(false);
-  }
+  const selectDoc = useCallback(
+    (id: string) => {
+      setSelectedDocumentId(id);
+      setPastedDocumentText("");
+      setPasteCapture(false);
+    },
+    [setSelectedDocumentId, setPastedDocumentText, setPasteCapture],
+  );
+
+  const onPasteChange = useCallback(
+    (e: ChangeEvent<HTMLTextAreaElement>) => {
+      const v = e.target.value;
+      setPastedDocumentText(v);
+      const trimmed = v.trim();
+      if (trimmed.length >= 40) {
+        setPasteCapture(true);
+      } else {
+        setPasteCapture(false);
+      }
+    },
+    [setPastedDocumentText, setPasteCapture],
+  );
+
+  const selectedScenarioTitle = useMemo(() => {
+    if (!selectedScenarioId) return "None";
+    return scenarios.find((x) => x.id === selectedScenarioId)?.title ?? "—";
+  }, [selectedScenarioId]);
 
   return (
     <div className="px-4 py-8 md:px-10 lg:px-14">
@@ -86,16 +108,7 @@ export function ScenarioSimulator() {
             </div>
             <textarea
               value={pastedDocumentText}
-              onChange={(e) => {
-                const v = e.target.value;
-                setPastedDocumentText(v);
-                const trimmed = v.trim();
-                if (trimmed.length >= 40) {
-                  setPasteCapture(true);
-                } else {
-                  setPasteCapture(false);
-                }
-              }}
+              onChange={onPasteChange}
               placeholder={
                 mode === "demo"
                   ? "Paste an excerpt to simulate document capture (mock-only, stays local)."
@@ -171,7 +184,7 @@ export function ScenarioSimulator() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[rgba(244,114,208,0.28)] bg-[rgba(55,16,70,0.55)] px-3 py-2 backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[rgba(244,114,208,0.28)] bg-[rgba(55,16,70,0.55)] px-3 py-2 backdrop-blur-sm">
             <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-pink-300">
               Analysis source
             </span>
@@ -203,7 +216,7 @@ export function ScenarioSimulator() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[rgba(244,114,208,0.28)] bg-[rgba(55,16,70,0.55)] px-3 py-2 backdrop-blur-md">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[rgba(244,114,208,0.28)] bg-[rgba(55,16,70,0.55)] px-3 py-2 backdrop-blur-sm">
             <span className="font-mono text-[10px] uppercase tracking-[0.24em] text-pink-300">
               Analysis depth
             </span>
@@ -287,7 +300,7 @@ export function ScenarioSimulator() {
         <div className="lg:sticky lg:top-28">
           <GlassPanel glow="blue" className="flex flex-col items-center px-6 py-10">
             <FelineSignalEngine state={engineState} size="lg" showLabels />
-            <div className="mt-8 w-full rounded-xl border border-warmBorder bg-warmGlass px-4 py-4 font-mono text-xs text-mutedGrey backdrop-blur-md">
+            <div className="mt-8 w-full rounded-xl border border-warmBorder bg-warmGlass px-4 py-4 font-mono text-xs text-mutedGrey backdrop-blur-sm">
               <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em]">
                 <span>Signal chain</span>
                 <span className="text-peachGlow">Live preview</span>
@@ -308,10 +321,7 @@ export function ScenarioSimulator() {
                 <div>
                   Stress condition:{" "}
                   <span className="text-softWhite">
-                    {selectedScenarioId
-                      ? scenarios.find((x) => x.id === selectedScenarioId)
-                          ?.title ?? "—"
-                      : "None"}
+                    {selectedScenarioTitle}
                   </span>
                 </div>
                 <div>

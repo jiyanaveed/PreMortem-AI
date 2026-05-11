@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import { useDemo } from "../../context/DemoContext";
 import { analysisSourceBadgeLabel } from "../../utils/analysisSourceLabel";
@@ -10,14 +11,13 @@ const mobileLinks = [
 
 export function TopBar() {
   const { mode, demoFallbackUsed, cachedAnalysis } = useDemo();
-  const badgeLabel = analysisSourceBadgeLabel(
-    mode,
-    demoFallbackUsed,
-    cachedAnalysis,
+  const badgeLabel = useMemo(
+    () => analysisSourceBadgeLabel(mode, demoFallbackUsed, cachedAnalysis),
+    [mode, demoFallbackUsed, cachedAnalysis],
   );
 
   return (
-    <header className="sticky top-0 z-30 border-b border-warmBorder/40 bg-deepPlum/65 backdrop-blur-2xl">
+    <header className="sticky top-0 z-30 border-b border-warmBorder/40 bg-deepPlum/65 backdrop-blur-xl">
       <div className="flex items-center justify-between px-4 py-4 md:px-8">
       <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-4">
         <span className="font-display text-base font-semibold tracking-tight md:text-lg">
@@ -30,7 +30,7 @@ export function TopBar() {
       </div>
       <div className="flex items-center gap-3">
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signalCyan opacity-[0.35]" />
+          <span className="absolute inline-flex h-full w-full animate-ping motion-reduce:animate-none rounded-full bg-signalCyan opacity-[0.35]" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-signalCyan" />
         </span>
         <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-softLavender md:text-[11px]">

@@ -14,6 +14,15 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-1.5-flash"
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     min_document_chars: int = 80
+    node_env: str | None = None
+    app_env: str | None = None
+
+    def is_local_dev_logging(self) -> bool:
+        """True when env indicates local development (verbose diagnostics only)."""
+        for v in (self.node_env, self.app_env):
+            if v and v.strip().lower() in ("development", "dev", "local", "debug"):
+                return True
+        return False
 
 
 @lru_cache

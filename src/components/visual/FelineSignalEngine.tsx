@@ -1,5 +1,7 @@
+import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import type { FelineSignalEngineState } from "../../types/analysis";
+import { usePrefersReducedMotion } from "../../hooks/usePrefersReducedMotion";
 
 export type FelineSignalEngineProps = {
   state?: FelineSignalEngineState;
@@ -11,14 +13,25 @@ const sizeMap = {
   sm: 200,
   md: 320,
   lg: 420,
-};
+} as const;
 
-export function FelineSignalEngine({
+const PARTICLE_KEYS = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+
+const FAILURE_NODE_COORDS = [
+  { cx: 34, cy: 96 },
+  { cx: 166, cy: 92 },
+  { cx: 48, cy: 154 },
+  { cx: 158, cy: 150 },
+  { cx: 100, cy: 44 },
+] as const;
+
+function FelineSignalEngineInner({
   state = "idle",
   size = "md",
   showLabels = false,
 }: FelineSignalEngineProps) {
   const dim = sizeMap[size];
+  const reducedMotion = usePrefersReducedMotion();
   const isAnalyzing = state === "analyzing";
   const eyesCyan = state !== "idle";
 
@@ -32,6 +45,22 @@ export function FelineSignalEngine({
   const resolvedGlow = state === "resolved";
   const idleDim = state === "idle";
 
+  const idleOuterMotion = useMemo(
+    () =>
+      reducedMotion
+        ? { opacity: idleDim ? 0.85 : 1, scale: 1 }
+        : { opacity: idleDim ? 0.65 : 1, scale: idleDim ? 0.98 : 1 },
+    [idleDim, reducedMotion],
+  );
+
+  const idleOuterTransition = useMemo(
+    () =>
+      reducedMotion
+        ? { duration: 0 }
+        : { duration: 2.4, repeat: idleDim ? Infinity : 0, repeatType: "reverse" as const },
+    [idleDim, reducedMotion],
+  );
+
   return (
     <div className="relative flex flex-col items-center">
       {showLabels && (
@@ -42,38 +71,35 @@ export function FelineSignalEngine({
       <motion.div
         className="relative"
         style={{ width: dim, height: dim }}
-        animate={{
-          opacity: idleDim ? 0.65 : 1,
-          scale: idleDim ? 0.98 : 1,
-        }}
-        transition={{ duration: 2.4, repeat: idleDim ? Infinity : 0, repeatType: "reverse" }}
+        animate={idleOuterMotion}
+        transition={idleOuterTransition}
       >
-        {/* Ambient particles — warm micro-accent */}
-        {[...Array(8)].map((_, i) => (
-          <motion.span
-            key={i}
-            className="pointer-events-none absolute h-1 w-1 rounded-full bg-peachGlow/80"
-            style={{
-              left: `${12 + (i % 4) * 22}%`,
-              top: `${10 + Math.floor(i / 4) * 70}%`,
-            }}
-            animate={{
-              opacity: [0.2, 0.85, 0.35],
-              y: [0, -6, 0],
-            }}
-            transition={{
-              duration: 3 + i * 0.2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
+        {!reducedMotion &&
+          PARTICLE_KEYS.map((i) => (
+            <motion.span
+              key={i}
+              className="pointer-events-none absolute h-1 w-1 rounded-full bg-peachGlow/80"
+              style={{
+                left: `${12 + (i % 4) * 22}%`,
+                top: `${10 + Math.floor(i / 4) * 70}%`,
+              }}
+              animate={{
+                opacity: [0.2, 0.85, 0.35],
+                y: [0, -6, 0],
+              }}
+              transition={{
+                duration: 3 + i * 0.2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          ))}
 
         <svg
           width={dim}
           height={dim}
           viewBox="0 0 200 200"
-          className="drop-shadow-[0_0_36px_rgba(244,114,208,0.22)]"
+          className="drop-shadow-[0_0_28px_rgba(244,114,208,0.18)]"
           aria-hidden
         >
           <defs>
@@ -108,19 +134,20 @@ export function FelineSignalEngine({
             </filter>
           </defs>
 
-          {/* Radar rings */}
           <motion.g
             animate={
-              isAnalyzing
-                ? { opacity: [0.3, 0.85, 0.35], scale: [0.96, 1.02, 0.98] }
-                : failureNodes
-                  ? { opacity: 0.55 }
-                  : { opacity: 0.35 }
+              reducedMotion
+                ? { opacity: isAnalyzing ? 0.55 : failureNodes ? 0.55 : 0.35, scale: 1 }
+                : isAnalyzing
+                  ? { opacity: [0.3, 0.85, 0.35], scale: [0.96, 1.02, 0.98] }
+                  : failureNodes
+                    ? { opacity: 0.55 }
+                    : { opacity: 0.35 }
             }
             transition={
-              isAnalyzing
-                ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" }
-                : { duration: 0.4 }
+              reducedMotion || !isAnalyzing
+                ? { duration: 0.4 }
+                : { duration: 1.6, repeat: Infinity, ease: "easeInOut" }
             }
             style={{ transformOrigin: "100px 100px" }}
           >
@@ -138,12 +165,13 @@ export function FelineSignalEngine({
             ))}
           </motion.g>
 
-          {/* Scan wedge */}
           <motion.g
             style={{ transformOrigin: "100px 105px" }}
-            animate={isAnalyzing ? { rotate: 360 } : { rotate: 0 }}
+            animate={
+              reducedMotion || !isAnalyzing ? { rotate: 0 } : { rotate: 360 }
+            }
             transition={
-              isAnalyzing
+              isAnalyzing && !reducedMotion
                 ? { duration: 3, repeat: Infinity, ease: "linear" }
                 : { duration: 0.3 }
             }
@@ -155,7 +183,6 @@ export function FelineSignalEngine({
             />
           </motion.g>
 
-          {/* Ears */}
           <path
             d="M62 78 L52 48 L78 62 Z"
             fill="none"
@@ -173,23 +200,17 @@ export function FelineSignalEngine({
             opacity={idleDim ? 0.42 : 0.88}
           />
 
-          {/* Face mask */}
           <path
             d="M100 70 C68 70 52 96 52 118 C52 142 72 158 100 158 C128 158 148 142 148 118 C148 96 132 70 100 70 Z"
             fill="none"
             stroke={
-              resolvedGlow
-                ? "#D8B4FE"
-                : idleDim
-                  ? "#6b5c78"
-                  : "#FFC3A1"
+              resolvedGlow ? "#D8B4FE" : idleDim ? "#6b5c78" : "#FFC3A1"
             }
             strokeWidth="1.5"
             opacity={idleDim ? 0.48 : 0.95}
             filter={resolvedGlow ? "url(#blurGlow)" : undefined}
           />
 
-          {/* Whiskers */}
           <g
             stroke={whiskersBright ? "#D8B4FE" : "#8b7a96"}
             strokeWidth="1"
@@ -203,7 +224,6 @@ export function FelineSignalEngine({
             <path d="M142 138 L174 144" />
           </g>
 
-          {/* Eyes — signal cyan with soft warm halo */}
           <ellipse
             cx="82"
             cy="108"
@@ -222,62 +242,58 @@ export function FelineSignalEngine({
             opacity={eyesCyan ? 1 : 0.45}
             filter={eyesCyan ? "url(#eyeGlow)" : undefined}
           />
-          <ellipse
-            cx="82"
-            cy="108"
-            rx="4"
-            ry="3"
-            fill="#230A33"
-            opacity={0.68}
-          />
-          <ellipse
-            cx="118"
-            cy="108"
-            rx="4"
-            ry="3"
-            fill="#230A33"
-            opacity={0.68}
-          />
+          <ellipse cx="82" cy="108" rx="4" ry="3" fill="#230A33" opacity={0.68} />
+          <ellipse cx="118" cy="108" rx="4" ry="3" fill="#230A33" opacity={0.68} />
 
-          {/* Nose / decision node */}
           <motion.circle
             cx="100"
             cy="124"
             r="5"
             fill="url(#warmCore)"
             animate={{
-              opacity: isAnalyzing ? [0.5, 1, 0.55] : resolvedGlow ? 0.95 : 0.75,
-              scale: isAnalyzing ? [1, 1.15, 1] : 1,
+              opacity: isAnalyzing
+                ? reducedMotion
+                  ? 0.85
+                  : [0.5, 1, 0.55]
+                : resolvedGlow
+                  ? 0.95
+                  : 0.75,
+              scale: isAnalyzing && !reducedMotion ? [1, 1.15, 1] : 1,
             }}
             transition={
-              isAnalyzing
+              isAnalyzing && !reducedMotion
                 ? { duration: 1.2, repeat: Infinity }
                 : { duration: 0.4 }
             }
           />
 
-          {/* Risk nodes */}
           {failureNodes &&
-            [
-              { cx: 34, cy: 96 },
-              { cx: 166, cy: 92 },
-              { cx: 48, cy: 154 },
-              { cx: 158, cy: 150 },
-              { cx: 100, cy: 44 },
-            ].map((p, idx) => (
+            FAILURE_NODE_COORDS.map((p, idx) => (
               <motion.circle
-                key={idx}
+                key={`${p.cx}-${p.cy}`}
                 cx={p.cx}
                 cy={p.cy}
                 r="5"
                 fill="url(#riskGrad)"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: [0.7, 1, 0.75], scale: [1, 1.1, 1] }}
-                transition={{
-                  duration: 1.8,
-                  repeat: Infinity,
-                  delay: idx * 0.15,
-                }}
+                initial={
+                  reducedMotion
+                    ? { opacity: 0.85, scale: 1 }
+                    : { opacity: 0, scale: 0.5 }
+                }
+                animate={
+                  reducedMotion
+                    ? { opacity: 0.85, scale: 1 }
+                    : { opacity: [0.7, 1, 0.75], scale: [1, 1.1, 1] }
+                }
+                transition={
+                  reducedMotion
+                    ? { duration: 0.2 }
+                    : {
+                        duration: 1.8,
+                        repeat: Infinity,
+                        delay: idx * 0.15,
+                      }
+                }
               />
             ))}
         </svg>
@@ -293,3 +309,5 @@ export function FelineSignalEngine({
     </div>
   );
 }
+
+export const FelineSignalEngine = memo(FelineSignalEngineInner);
